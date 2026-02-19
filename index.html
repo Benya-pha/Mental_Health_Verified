@@ -2,60 +2,86 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ST-5 Clinical Assessment Tool</title>
-    <!-- Tailwind CSS for Styling -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>แบบประเมินความเครียด ST-5 มาตรฐานทางการแพทย์</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React & ReactDOM -->
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <!-- Babel for JSX transformation -->
+    <!-- React & Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Google Fonts: Kodchasan (ตัวกลมมน สไตล์การแพทย์) -->
+    <link href="https://fonts.googleapis.com/css2?family=Kodchasan:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700;800&display=swap');
-        body { font-family: 'Sarabun', sans-serif; }
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        * {
+            font-family: 'Kodchasan', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background-color: #F4F9FF;
+            color: #1E293B;
+            margin: 0;
+            padding: 0;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+        
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .medical-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+        }
+
+        /* ป้องกันไอคอนดีดตัวหรือเสียทรง */
+        svg {
+            display: inline-block;
+            vertical-align: middle;
+        }
     </style>
 </head>
-<body class="bg-[#F0F4F8]">
-    <div id="root"></div>
+<body class="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8">
+    <div id="root" class="w-full max-w-2xl"></div>
 
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // --- Inline SVG Icons (แทน Lucide-React เพื่อให้ทำงานได้เสถียรในไฟล์เดียว) ---
-        const Icon = ({ name, className }) => {
+        // --- SVGs Icons Optimized for Medical Look ---
+        const Icon = ({ name, className = "w-5 h-5" }) => {
             const icons = {
-                shield: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>,
-                arrowRight: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>,
-                history: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>,
-                file: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>,
-                stethoscope: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>,
-                check: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>,
-                alert: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>,
-                save: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>,
-                trash: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>,
-                calendar: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>,
-                clock: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>,
-                book: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>,
-                external: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                // เปลี่ยนจาก Stethoscope เป็น Medical Plus (+)
+                medicalPlus: (
+                    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                ),
+                shield: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6.11a12.02 12.02 0 00-.717 5.955c.41 2.31 1.44 4.44 2.958 6.198l.003.003.004.004A11.954 11.954 0 0012 21.25c3.33 0 6.291-1.365 8.397-3.564l.004-.004.003-.003c1.518-1.758 2.548-3.888 2.958-6.198a12.02 12.02 0 00-.717-5.955A11.959 11.959 0 0112 2.714z"/></svg>,
+                history: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>,
+                info: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg>,
+                external: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/></svg>,
+                trash: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>,
+                check: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>,
+                calendar: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-14.25-6h7.5"/></svg>
             };
             return icons[name] || null;
         };
 
         const App = () => {
-            const [step, setStep] = useState(0);
-            const [st5Scores, setSt5Scores] = useState([0, 0, 0, 0, 0]);
+            const [step, setStep] = useState(0); 
+            const [scores, setScores] = useState([0, 0, 0, 0, 0]);
             const [records, setRecords] = useState([]);
 
             useEffect(() => {
-                const savedRecords = localStorage.getItem('st5_practice_records');
-                if (savedRecords) setRecords(JSON.parse(savedRecords));
+                const saved = localStorage.getItem('st5_clinical_v2');
+                if (saved) setRecords(JSON.parse(saved));
             }, []);
 
-            const st5Questions = [
+            const questions = [
                 "มีปัญหาเรื่องการนอน (นอนไม่หลับ หรือนอนมากเกินไป)",
                 "มีสมาธิน้อยลง ใจลอย หรือตัดสินใจลำบาก",
                 "รู้สึกหงุดหงิด กระสับกระส่าย หรือรำคาญใจ",
@@ -63,161 +89,215 @@
                 "ไม่อยากพบปะผู้คน หรือไม่อยากทำอะไรเลย"
             ];
 
-            const st5Total = st5Scores.reduce((a, b) => a + b, 0);
+            const handleScore = (idx, val) => {
+                const updated = [...scores];
+                updated[idx] = val;
+                setScores(updated);
+            };
 
-            const resetAssessment = () => { setSt5Scores([0, 0, 0, 0, 0]); setStep(1); };
+            const totalScore = scores.reduce((a, b) => a + b, 0);
 
-            const getSt5Level = (score) => {
-                if (score <= 4) return { label: "ความเครียดระดับน้อย (ปกติ)", color: "text-emerald-700", bg: "bg-emerald-50", border: "border-emerald-200", icon: "check", desc: "สภาวะทางจิตใจอยู่ในเกณฑ์ปกติ สามารถจัดการความเครียดได้ดี" };
-                if (score <= 7) return { label: "ความเครียดระดับปานกลาง", color: "text-sky-700", bg: "bg-sky-50", border: "border-sky-200", icon: " stethoscope", desc: "เริ่มมีผลกระทบต่อชีวิตประจำวัน ควรพักผ่อนหรือหาทางจัดการความเครียดเบื้องต้น" };
-                if (score <= 9) return { label: "ความเครียดระดับสูง", color: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200", icon: "alert", desc: "ระดับความเครียดสูงกว่าปกติ ควรลดภาระงานและหาทางระบายความเครียด" };
-                return { label: "ความเครียดระดับรุนแรง", color: "text-rose-700", bg: "bg-rose-50", border: "border-rose-200", icon: "alert", desc: "เสี่ยงต่อปัญหาสุขภาพจิตเรื้อรัง ควรรับคำปรึกษาจากผู้เชี่ยวชาญหรือจิตแพทย์" };
+            const getLevel = (score) => {
+                if (score <= 4) return { label: "เครียดระดับน้อย (ปกติ)", color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-200", desc: "จิตใจปกติ สามารถรับมือสิ่งต่างๆ ได้ดี" };
+                if (score <= 7) return { label: "เครียดระดับปานกลาง", color: "text-sky-600", bg: "bg-sky-50", border: "border-sky-200", desc: "เริ่มมีผลกระทบ ควรหาเวลาพักผ่อน" };
+                if (score <= 9) return { label: "เครียดระดับสูง", color: "text-orange-600", bg: "bg-orange-50", border: "border-orange-200", desc: "ควรหาทางระบายความเครียด หรือปรึกษาเพื่อน" };
+                return { label: "เครียดระดับรุนแรง", color: "text-rose-600", bg: "bg-rose-50", border: "border-rose-200", desc: "แนะนำให้ปรึกษาจิตแพทย์หรือผู้เชี่ยวชาญ" };
             };
 
             const saveRecord = () => {
                 const now = new Date();
-                const newRecord = { id: Date.now(), score: st5Total, level: getSt5Level(st5Total).label, date: now.toLocaleDateString('th-TH'), time: now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) };
-                const updated = [newRecord, ...records];
+                const newRec = {
+                    id: Date.now(),
+                    score: totalScore,
+                    level: getLevel(totalScore).label,
+                    date: now.toLocaleDateString('th-TH'),
+                    time: now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+                };
+                const updated = [newRec, ...records];
                 setRecords(updated);
-                localStorage.setItem('st5_practice_records', JSON.stringify(updated));
-                setStep(4);
+                localStorage.setItem('st5_clinical_v2', JSON.stringify(updated));
+                setStep(3);
             };
 
             const deleteRecord = (id) => {
                 const updated = records.filter(r => r.id !== id);
                 setRecords(updated);
-                localStorage.setItem('st5_practice_records', JSON.stringify(updated));
+                localStorage.setItem('st5_clinical_v2', JSON.stringify(updated));
             };
 
-            const currentLevel = getSt5Level(st5Total);
-
             return (
-                <div className="min-h-screen p-4 sm:p-8 flex flex-col items-center">
-                    <div className="w-full max-w-2xl">
-                        {/* Header */}
-                        <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-2xl border-b-4 border-sky-500 shadow-md">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-sky-700 rounded-lg shrink-0"><Icon name="stethoscope" className="text-white w-5 h-5" /></div>
-                                <div>
-                                    <span className="block font-black text-slate-900 text-sm md:text-base leading-none uppercase">ST-5 Clinical Assessment</span>
-                                    <span className="text-[10px] text-sky-600 font-bold tracking-widest uppercase">Mental Health Standards</span>
-                                </div>
+                <div className="w-full flex flex-col fade-in pb-10 sm:pb-0">
+                    
+                    {/* Floating Header */}
+                    <div className="bg-white rounded-full p-2 mb-6 shadow-lg border border-sky-100 flex items-center justify-between">
+                        <div className="flex items-center gap-3 ml-2">
+                            <div className="bg-sky-600 p-2 rounded-full text-white shadow-md">
+                                <Icon name="medicalPlus" className="w-5 h-5" />
                             </div>
-                            <div className="flex gap-2">
-                                <button onClick={() => setStep(4)} className="p-2 text-slate-400 hover:text-sky-700 rounded-full"><Icon name="history" className="w-5 h-5" /></button>
-                                <button onClick={() => setStep(3)} className="flex items-center gap-1.5 text-xs font-bold text-slate-600 border border-slate-200 px-3 py-2 rounded-full"><Icon name="file" className="w-3.5 h-3.5" /> เกณฑ์อ้างอิง</button>
+                            <div className="leading-tight">
+                                <p className="text-xs font-black text-slate-800 uppercase tracking-tight">ST-5 Standard</p>
+                                <p className="text-[9px] font-bold text-sky-500 uppercase tracking-[0.2em]">Clinical Research</p>
                             </div>
                         </div>
+                        <div className="flex gap-1 mr-1">
+                            <button onClick={() => setStep(4)} className="p-2.5 text-slate-400 hover:text-sky-600 transition-colors" title="ข้อมูลอ้างอิง"><Icon name="info" /></button>
+                            <button onClick={() => setStep(3)} className="p-2.5 text-slate-400 hover:text-sky-600 transition-colors" title="ประวัติ"><Icon name="history" /></button>
+                        </div>
+                    </div>
 
-                        <main className="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden min-h-[500px] flex flex-col transition-all">
-                            {step === 0 && (
-                                <div className="p-10 flex-1 flex flex-col justify-center items-center text-center space-y-8">
-                                    <div className="space-y-4">
-                                        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-sky-50 text-sky-700 rounded-full text-[10px] font-black border border-sky-100 uppercase tracking-wide">
-                                            <Icon name="shield" className="w-3.5 h-3.5" /> Thai DMH Verified
-                                        </div>
-                                        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">แบบประเมินความเครียด<br/><span className="text-sky-700">มาตรฐานทางการแพทย์ (ST-5)</span></h1>
-                                        <p className="text-slate-500 text-sm max-w-sm">การประเมินสภาวะทางจิตใจอย่างเป็นระบบตามมาตรฐานสากล</p>
-                                    </div>
-                                    <button onClick={resetAssessment} className="w-full bg-sky-700 hover:bg-sky-800 text-white font-black py-4 rounded-xl shadow-lg flex items-center justify-center gap-3 transition-all active:scale-95">
-                                        เริ่มการคัดกรองเบื้องต้น <Icon name="arrowRight" className="w-5 h-5" />
-                                    </button>
+                    {/* Main Content Area */}
+                    <div className="medical-card rounded-[2.5rem] shadow-2xl border border-white overflow-hidden flex flex-col min-h-[550px]">
+                        
+                        {/* Step 0: Welcome */}
+                        {step === 0 && (
+                            <div className="p-8 sm:p-12 flex-1 flex flex-col justify-center items-center text-center space-y-10 fade-in">
+                                <div className="space-y-4">
+                                    <span className="bg-sky-50 text-sky-700 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-sky-100 inline-flex items-center gap-2">
+                                        <Icon name="shield" className="w-3 h-3" /> Thai DMH Verified
+                                    </span>
+                                    <h1 className="text-3xl sm:text-4xl font-black text-slate-900 leading-tight">วัดระดับความเครียด<br/><span className="text-sky-600">เชิงคลินิก</span></h1>
+                                    <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-xs mx-auto">แบบประเมิน ST-5 ฉบับวิชาการ เพื่อวินิจฉัยสภาวะจิตใจตามเกณฑ์มาตรฐานไทย</p>
                                 </div>
-                            )}
+                                <button onClick={() => { setScores([0,0,0,0,0]); setStep(1); }} className="w-full max-w-xs bg-sky-600 hover:bg-sky-700 text-white font-black py-5 rounded-full shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 group">
+                                    เริ่มคัดกรองเบื้องต้น <Icon name="medicalPlus" className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />
+                                </button>
+                            </div>
+                        )}
 
-                            {step === 1 && (
-                                <div className="p-6 sm:p-8 space-y-6">
-                                    <div className="text-center border-b pb-4"><h3 className="text-lg font-black uppercase">การสำรวจอาการ (2 สัปดาห์)</h3></div>
-                                    <div className="space-y-4">
-                                        {st5Questions.map((q, i) => (
-                                            <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-                                                <p className="text-sm font-black text-slate-800">{i+1}. {q}</p>
-                                                <div className="grid grid-cols-4 gap-2">
-                                                    {[0,1,2,3].map(v => (
-                                                        <button key={v} onClick={() => handleSt5Change(i, v)} className={`py-2 text-[10px] font-black rounded-lg border-2 transition-all ${st5Scores[i] === v ? 'bg-sky-700 text-white border-sky-700' : 'bg-white text-slate-400 border-slate-100'}`}>
-                                                            {v===0?"ไม่มี":v===1?"บ้าง":v===2?"บ่อย":"ประจำ"}
-                                                        </button>
-                                                    ))}
+                        {/* Step 1: Quiz */}
+                        {step === 1 && (
+                            <div className="p-6 flex-1 flex flex-col space-y-6 fade-in">
+                                <div className="text-center">
+                                    <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">แบบสำรวจ 2 สัปดาห์</h2>
+                                    <div className="w-full bg-slate-100 h-1.5 rounded-full mt-4 overflow-hidden">
+                                        <div className="bg-sky-600 h-full transition-all duration-500" style={{width: '100%'}}></div>
+                                    </div>
+                                </div>
+                                <div className="space-y-4 overflow-y-auto max-h-[420px] pr-2 custom-scrollbar">
+                                    {questions.map((q, qIdx) => (
+                                        <div key={qIdx} className="bg-slate-50 p-5 rounded-[2rem] border border-slate-200 space-y-4 shadow-inner text-left">
+                                            <p className="text-sm font-bold text-slate-700 leading-relaxed">{qIdx+1}. {q}</p>
+                                            <div className="grid grid-cols-4 gap-2">
+                                                {[0, 1, 2, 3].map(val => (
+                                                    <button key={val} onClick={() => handleScore(qIdx, val)} className={`py-3 text-[10px] font-black rounded-full border-2 transition-all ${scores[qIdx] === val ? 'bg-sky-600 text-white border-sky-600 scale-105 shadow-md' : 'bg-white text-slate-400 border-slate-100 hover:border-sky-300'}`}>
+                                                        {val===0?"ไม่มี":val===1?"บ้าง":val===2?"บ่อย":"ประจำ"}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <button onClick={() => setStep(2)} className="w-full bg-slate-900 text-white font-black py-5 rounded-full shadow-2xl active:scale-95">ประมวลผลลัพธ์</button>
+                            </div>
+                        )}
+
+                        {/* Step 2: Result */}
+                        {step === 2 && (
+                            <div className="p-8 sm:p-12 flex-1 flex flex-col justify-center items-center text-center space-y-8 fade-in">
+                                <div className="space-y-3">
+                                    <div className={`mx-auto w-24 h-24 rounded-full flex items-center justify-center border-4 ${getLevel(totalScore).bg} ${getLevel(totalScore).border} shadow-inner`}>
+                                        <Icon name="medicalPlus" className={`w-12 h-12 ${getLevel(totalScore).color}`} />
+                                    </div>
+                                    <h2 className={`text-3xl font-black ${getLevel(totalScore).color}`}>{getLevel(totalScore).label}</h2>
+                                </div>
+                                <div className="w-full bg-slate-50 p-6 rounded-[2.5rem] border border-slate-200 shadow-inner">
+                                    <div className="flex justify-between items-center mb-2 font-black text-[10px] text-slate-400 uppercase tracking-widest">
+                                        <span>Clinical ST-5 Score</span>
+                                        <span className="text-slate-900">{totalScore} / 15</span>
+                                    </div>
+                                    <p className="text-sm text-slate-600 italic font-medium leading-relaxed">"{getLevel(totalScore).desc}"</p>
+                                </div>
+                                <div className="w-full space-y-3">
+                                    <button onClick={saveRecord} className="w-full bg-sky-600 hover:bg-sky-700 text-white font-black py-5 rounded-full shadow-lg shadow-sky-100 active:scale-95 transition-all">บันทึกผลลงรายงาน</button>
+                                    <button onClick={() => setStep(0)} className="w-full bg-slate-100 text-slate-500 font-bold py-4 rounded-full active:scale-95">เริ่มประเมินใหม่</button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Step 3: History */}
+                        {step === 3 && (
+                            <div className="p-6 flex-1 flex flex-col fade-in">
+                                <div className="flex justify-between items-center mb-6 pb-2 border-b">
+                                    <h3 className="font-black text-slate-800 flex items-center gap-2 uppercase text-sm"><Icon name="history" className="text-sky-600" /> ประวัติการประเมิน</h3>
+                                    <button onClick={() => setStep(0)} className="text-[10px] font-black uppercase text-sky-600 hover:bg-sky-50 px-3 py-1 rounded-full">Back</button>
+                                </div>
+                                <div className="flex-1 space-y-4 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
+                                    {records.length === 0 ? (
+                                        <div className="py-20 text-center text-slate-300 italic flex flex-col items-center">
+                                            <Icon name="history" className="w-12 h-12 opacity-10 mb-2" />
+                                            <p className="text-sm font-bold">ยังไม่มีข้อมูลการบันทึก</p>
+                                        </div>
+                                    ) : (
+                                        records.map(r => (
+                                            <div key={r.id} className="bg-white border-2 border-slate-50 p-5 rounded-[2rem] shadow-sm flex justify-between items-center hover:border-sky-200 transition-all border-l-8 text-left" style={{borderLeftColor: r.score <= 4 ? '#10b981' : r.score <= 7 ? '#0ea5e9' : r.score <= 9 ? '#f59e0b' : '#f43f5e'}}>
+                                                <div className="space-y-1">
+                                                    <p className="text-[9px] font-black text-slate-400 uppercase">{r.date} • {r.time}</p>
+                                                    <p className={`text-sm font-black ${getLevel(r.score).color}`}>{r.level}</p>
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <span className="text-2xl font-black text-slate-800">{r.score} <small className="text-[10px] opacity-30">/15</small></span>
+                                                    <button onClick={() => deleteRecord(r.id)} className="p-2 text-slate-200 hover:text-rose-500 transition-colors"><Icon name="trash" className="w-5 h-5" /></button>
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
-                                    <button onClick={() => setStep(2)} className="w-full bg-slate-900 text-white font-black py-4 rounded-xl shadow-xl active:scale-95">ประมวลผลการวินิจฉัย</button>
+                                        ))
+                                    )}
                                 </div>
-                            )}
+                                <button onClick={() => {setScores([0,0,0,0,0]); setStep(1);}} className="mt-6 w-full bg-sky-600 text-white font-black py-4 rounded-full active:scale-95 shadow-md">เพิ่มครั้งใหม่</button>
+                            </div>
+                        )}
 
-                            {step === 2 && (
-                                <div className="p-10 flex-1 flex flex-col justify-center items-center text-center space-y-8">
+                        {/* Step 4: Reference */}
+                        {step === 4 && (
+                            <div className="p-6 sm:p-8 flex-1 flex flex-col fade-in">
+                                <div className="flex justify-between items-center mb-6 pb-2 border-b">
+                                    <h3 className="font-black text-slate-800 flex items-center gap-2 uppercase text-sm"><Icon name="shield" className="text-sky-600" /> ข้อมูลรับรองวิชาการ</h3>
+                                    <button onClick={() => setStep(0)} className="text-[10px] font-black uppercase text-sky-600 hover:bg-sky-50 px-3 py-1 rounded-full">Back</button>
+                                </div>
+                                <div className="flex-1 space-y-6 overflow-y-auto max-h-[450px] pr-2 custom-scrollbar text-left">
+                                    <div className="bg-sky-50 p-6 rounded-[2rem] border border-sky-100">
+                                        <h4 className="font-black text-sm text-sky-800 mb-3 flex items-center gap-2 underline">ทำไมคะแนนเต็ม 15?</h4>
+                                        <p className="text-xs text-slate-600 leading-relaxed font-medium">แบบประเมิน **ST-5** พัฒนาโดยกรมสุขภาพจิต กระทรวงสาธารณสุข ประกอบด้วย 5 ข้อคำถาม โดยแต่ละข้อมีระดับ 0-3 คะแนน ทำให้มีคะแนนรวมสูงสุด **15 คะแนน** ซึ่งเป็นมาตรฐานสถิติที่ใช้ในการคัดกรองปัญหาสุขภาพจิตของประชากรไทย</p>
+                                    </div>
                                     <div className="space-y-4">
-                                        <div className={`mx-auto w-24 h-24 rounded-[2rem] flex items-center justify-center border-4 ${currentLevel.bg} ${currentLevel.border}`}>
-                                            <Icon name={currentLevel.icon} className="w-12 h-12" />
-                                        </div>
-                                        <h2 className={`text-2xl font-black ${currentLevel.color}`}>{currentLevel.label}</h2>
-                                    </div>
-                                    <div className="w-full bg-slate-50 p-6 rounded-[2rem] border border-slate-200">
-                                        <div className="flex justify-between mb-2 font-black text-xs text-slate-400 uppercase tracking-widest"><span>ST-5 Raw Score</span><span>{st5Total} / 15</span></div>
-                                        <p className="text-sm text-slate-600 italic">"{currentLevel.desc}"</p>
-                                    </div>
-                                    <div className="w-full space-y-3">
-                                        <button onClick={saveRecord} className="w-full bg-sky-700 text-white font-black py-4 rounded-xl shadow-lg flex items-center justify-center gap-2 active:scale-95"><Icon name="save" className="w-5 h-5" /> ยืนยันและบันทึกข้อมูล</button>
-                                        <button onClick={resetAssessment} className="w-full bg-slate-100 text-slate-600 font-bold py-3 rounded-xl active:scale-95">เริ่มประเมินใหม่</button>
-                                    </div>
-                                </div>
-                            )}
+                                        <h4 className="font-black text-xs text-slate-400 uppercase tracking-[0.2em] px-2">แหล่งข้อมูลอ้างอิง</h4>
+                                        
+                                        <a href="https://www.dmh.go.th" target="_blank" className="flex items-center justify-between p-5 bg-white border border-slate-200 rounded-[1.5rem] hover:border-sky-500 transition-all group shadow-sm">
+                                            <div className="space-y-1 pr-4">
+                                                <p className="text-sm font-black text-slate-800 group-hover:text-sky-600 transition-colors">กรมสุขภาพจิต (DMH)</p>
+                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight leading-relaxed">Official Standardized Assessment Guidelines</p>
+                                            </div>
+                                            <div className="flex-shrink-0 bg-sky-50 p-2 rounded-full text-sky-600 group-hover:bg-sky-600 group-hover:text-white transition-all">
+                                                <Icon name="external" className="w-4 h-4" />
+                                            </div>
+                                        </a>
 
-                            {step === 3 && (
-                                <div className="p-8 space-y-6 flex-1 flex flex-col">
-                                    <div className="flex justify-between items-center border-b pb-4">
-                                        <h3 className="text-xl font-black flex items-center gap-2"><Icon name="book" className="w-5 h-5 text-sky-700" /> ข้อมูลทางวิชาการ</h3>
-                                        <button onClick={() => setStep(step === 2 ? 2 : 0)} className="text-[10px] font-black uppercase text-slate-400">Close</button>
+                                        <a href="https://tci-thaijo.org" target="_blank" className="flex items-center justify-between p-5 bg-white border border-slate-200 rounded-[1.5rem] hover:border-sky-500 transition-all group shadow-sm">
+                                            <div className="space-y-1 pr-4">
+                                                <p className="text-sm font-black text-slate-800 group-hover:text-sky-600 transition-colors">ฐานข้อมูล ThaiJO (TCI)</p>
+                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight leading-relaxed">Academic Research & Clinical Reliability</p>
+                                            </div>
+                                            <div className="flex-shrink-0 bg-sky-50 p-2 rounded-full text-sky-600 group-hover:bg-sky-600 group-hover:text-white transition-all">
+                                                <Icon name="external" className="w-4 h-4" />
+                                            </div>
+                                        </a>
                                     </div>
-                                    <div className="flex-1 space-y-4 overflow-y-auto max-h-[350px] pr-2 custom-scrollbar text-left">
-                                        <div className="p-4 bg-sky-50 rounded-2xl border border-sky-100">
-                                            <h4 className="font-black text-sm text-sky-800 mb-2">มาตรฐานกรมสุขภาพจิต (DMH)</h4>
-                                            <p className="text-xs text-slate-600 leading-relaxed">ST-5 เป็นเครื่องมือมาตรฐานที่ใช้คัดกรองเบื้องต้น มีคะแนนเต็ม 15 คะแนน (5 ข้อ ข้อละ 0-3 คะแนน) มีความเที่ยงตรงสูงในประชากรไทย</p>
-                                            <a href="https://www.dmh.go.th" target="_blank" className="mt-2 inline-flex items-center gap-1 text-[10px] font-black text-sky-600 uppercase">Open Official Site <Icon name="external" className="w-3 h-3"/></a>
-                                        </div>
-                                    </div>
-                                    <button onClick={() => setStep(step === 2 ? 2 : 0)} className="w-full bg-slate-900 text-white font-black py-4 rounded-xl">เข้าใจแล้ว</button>
-                                </div>
-                            )}
-
-                            {step === 4 && (
-                                <div className="p-6 sm:p-8 space-y-6 flex-1 flex flex-col">
-                                    <div className="flex justify-between items-center border-b pb-4">
-                                        <h3 className="text-xl font-black flex items-center gap-2"><Icon name="history" className="w-5 h-5 text-sky-700" /> ประวัติการบันทึก</h3>
-                                        <button onClick={() => setStep(0)} className="text-[10px] font-black uppercase text-slate-400">Back</button>
-                                    </div>
-                                    <div className="flex-1 space-y-4 overflow-y-auto max-h-[380px] pr-2 custom-scrollbar">
-                                        {records.length === 0 ? (
-                                            <div className="text-center py-20 text-slate-300 italic"><Icon name="history" className="mx-auto mb-2 opacity-10 w-12 h-12"/><p>No Records</p></div>
-                                        ) : (
-                                            records.map(r => (
-                                                <div key={r.id} className="bg-white border p-4 rounded-2xl shadow-sm border-l-8 flex justify-between items-center" style={{ borderLeftColor: r.score <= 4 ? '#10b981' : r.score <= 7 ? '#0ea5e9' : '#f59e0b' }}>
-                                                    <div>
-                                                        <div className="flex gap-2 text-[9px] font-black text-slate-400 mb-1 uppercase tracking-tighter"><span>{r.date}</span><span>{r.time}</span></div>
-                                                        <p className="text-xs font-black text-slate-800">{r.level}</p>
-                                                    </div>
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="text-2xl font-black text-slate-800">{r.score} <small className="text-[10px] opacity-30">/15</small></span>
-                                                        <button onClick={() => deleteRecord(r.id)} className="p-2 text-slate-200 hover:text-rose-500"><Icon name="trash" className="w-4 h-4" /></button>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        )}
-                                    </div>
-                                    <div className="p-4 bg-slate-900 rounded-2xl flex items-center gap-3 text-white">
-                                        <Icon name="history" className="w-5 h-5 text-sky-400" />
-                                        <p className="text-[10px] font-black uppercase tracking-widest">Capture this for your report appendix</p>
+                                    <div className="bg-amber-50 p-5 rounded-[1.5rem] border border-amber-100 flex items-start gap-3 shadow-inner">
+                                        <Icon name="info" className="text-amber-500 shrink-0 w-5 h-5 mt-0.5" />
+                                        <p className="text-[10px] font-bold text-amber-800 leading-relaxed uppercase tracking-wide">
+                                            ข้อมูลนี้ใช้ยืนยันในรายงาน "บทที่ 3: เครื่องมือที่ใช้" เพื่อรับรองความถูกต้องตามมาตรฐานการแพทย์ไทย
+                                        </p>
                                     </div>
                                 </div>
-                            )}
-                        </main>
-                        <footer className="mt-8 text-center text-[9px] font-black text-slate-400 uppercase tracking-[0.4em] leading-loose">
-                            Clinical Standard • ST-5 Assessment Module<br/>
-                            <span className="opacity-50">Single File Offline-Ready Web Application</span>
-                        </footer>
+                                <button onClick={() => setStep(0)} className="mt-6 w-full bg-slate-900 text-white font-black py-4 rounded-full active:scale-95 shadow-md transition-all">เข้าใจแล้ว</button>
+                            </div>
+                        )}
                     </div>
+
+                    {/* Minimal Footer */}
+                    <footer className="mt-8 text-center px-10">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.4em] leading-loose">Clinical ST-5 Module • V2.2 Professional Logo</p>
+                        <p className="text-[8px] text-slate-300 font-bold uppercase tracking-widest mt-1">Mental Health Research & Practice Tool</p>
+                    </footer>
                 </div>
             );
         };
